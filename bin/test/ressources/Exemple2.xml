@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root model="#1">
+    <Model id="#1" name="ExempleModel">
+    </Model>
+    <Entity id="#2" model="#1" name="Exemple">
+        <attribute name="nom" type="String"/>
+        <attribute name="valeur" type="Integer"/>
+    </Entity>
+</Root>

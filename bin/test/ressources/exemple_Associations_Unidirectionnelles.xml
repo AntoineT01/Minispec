@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root model="#1">
+    <Model id="#1">
+    </Model>
+    <entity id="#2" model="#1" name="Satellite">
+        <attribute name="nom" type="String"/>
+        <attribute name="id" type="Integer"/>
+        <attribute name="parent" type="Flotte"/>
+    </entity>
+    <entity id="#3" model="#1" name="Flotte">
+    </entity>
+</Root>
