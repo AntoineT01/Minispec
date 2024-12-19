@@ -3,7 +3,6 @@ package test;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.Before;
-import org.junit.After;
 
 import XMLIO.XMLAnalyser;
 import codeGeneration.JavaGenerator;
@@ -15,13 +14,13 @@ import java.nio.file.*;
 
 public class AssociationUnidirectionnelleTest {
 
-  private final String TEST_OUTPUT_DIR = "src/generated/java/";
+  private final String GENERATED_PATH = "src/generated/java/";
 
   @Before
   public void setup() {
     // Crée le répertoire de sortie s'il n'existe pas
     try {
-      Files.createDirectories(Paths.get(TEST_OUTPUT_DIR));
+      Files.createDirectories(Paths.get(GENERATED_PATH));
     } catch (IOException e) {
       fail("Impossible de créer le répertoire de test: " + e.getMessage());
     }
@@ -39,45 +38,47 @@ public class AssociationUnidirectionnelleTest {
     Model model = analyser.getModelFromFile(xmlFile);
     assertNotNull("Le modèle ne devrait pas être null", model);
 
-    // Vérification du modèle comme avant...
+    // Vérification du modèle
+    assertEquals("Le modèle devrait contenir 2 entités", 2, model.getEntities().size());
 
     // Génération des fichiers Java
     JavaGenerator generator = new JavaGenerator();
-    generator.setOutputDir(TEST_OUTPUT_DIR);
     model.accept(generator);
 
     // Vérification de la création des fichiers
-    File satelliteFile = new File(TEST_OUTPUT_DIR + "Satellite.java");
-    File flotteFile = new File(TEST_OUTPUT_DIR + "Flotte.java");
+    File satelliteFile = new File(GENERATED_PATH + "Satellite.java");
+    File flotteFile = new File(GENERATED_PATH + "Flotte.java");
 
     assertTrue("Le fichier Satellite.java devrait être créé", satelliteFile.exists());
     assertTrue("Le fichier Flotte.java devrait être créé", flotteFile.exists());
 
-    // Vérification optionnelle du contenu des fichiers
+    // Vérification du contenu des fichiers
     try {
       String satelliteContent = Files.readString(satelliteFile.toPath());
       String flotteContent = Files.readString(flotteFile.toPath());
 
+      // Vérifie le package
+      assertTrue("Satellite.java devrait avoir le bon package",
+                 satelliteContent.contains("package generated.java"));
+      assertTrue("Flotte.java devrait avoir le bon package",
+                 flotteContent.contains("package generated.java"));
+
+      // Vérifie les classes
       assertTrue("Satellite.java devrait contenir la définition de la classe",
                  satelliteContent.contains("public class Satellite"));
       assertTrue("Flotte.java devrait contenir la définition de la classe",
                  flotteContent.contains("public class Flotte"));
 
+      // Vérifie les attributs de Satellite
+      assertTrue("Satellite devrait avoir l'attribut nom",
+                 satelliteContent.contains("private String nom;"));
+      assertTrue("Satellite devrait avoir l'attribut id",
+                 satelliteContent.contains("private Integer id;"));
+      assertTrue("Satellite devrait avoir l'attribut parent",
+                 satelliteContent.contains("private Flotte parent;"));
+
     } catch (IOException e) {
       fail("Erreur lors de la lecture des fichiers générés: " + e.getMessage());
     }
-  }
-
-  @After
-  public void cleanup() {
-    // Optionnel : supprime les fichiers générés après le test
-        /*
-        try {
-            Files.deleteIfExists(Paths.get(TEST_OUTPUT_DIR + "Satellite.java"));
-            Files.deleteIfExists(Paths.get(TEST_OUTPUT_DIR + "Flotte.java"));
-        } catch (IOException e) {
-            System.err.println("Erreur lors du nettoyage: " + e.getMessage());
-        }
-        */
   }
 }

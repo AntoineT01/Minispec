@@ -7,25 +7,14 @@ import java.nio.file.*;
 public class JavaGenerator extends Visitor {
   private StringBuilder code = new StringBuilder();
   private int indentLevel = 0;
-  private String outputDir = "src/generated/java/";  // Répertoire de sortie par défaut
-  private String currentClassName;  // Pour suivre la classe en cours de génération
+  private String baseOutputDir = "src/";
+  private String packageName = "generated.java";
+  private String currentClassName;
 
   public JavaGenerator() {
-    // Crée le répertoire de sortie s'il n'existe pas
+    String packagePath = baseOutputDir + packageName.replace('.', '/');
     try {
-      Files.createDirectories(Paths.get(outputDir));
-    } catch (IOException e) {
-      System.err.println("Impossible de créer le répertoire de sortie: " + e.getMessage());
-    }
-  }
-
-  public void setOutputDir(String dir) {
-    this.outputDir = dir;
-    if (!this.outputDir.endsWith("/")) {
-      this.outputDir += "/";
-    }
-    try {
-      Files.createDirectories(Paths.get(outputDir));
+      Files.createDirectories(Paths.get(packagePath));
     } catch (IOException e) {
       System.err.println("Impossible de créer le répertoire de sortie: " + e.getMessage());
     }
@@ -34,10 +23,10 @@ public class JavaGenerator extends Visitor {
   private void writeToFile() {
     if (currentClassName != null && code.length() > 0) {
       try {
-        String fileName = outputDir + currentClassName + ".java";
+        String packagePath = baseOutputDir + packageName.replace('.', '/');
+        String fileName = packagePath + "/" + currentClassName + ".java";
         System.out.println("Création du fichier: " + fileName);
         Files.write(Paths.get(fileName), code.toString().getBytes());
-        // Réinitialise le buffer pour la prochaine classe
         code.setLength(0);
       } catch (IOException e) {
         System.err.println("Erreur lors de l'écriture du fichier: " + e.getMessage());
@@ -46,23 +35,22 @@ public class JavaGenerator extends Visitor {
   }
 
   private void indent() {
-    for (int i = 0; i < indentLevel; i++) {
-      code.append("    ");
-    }
+    code.append("    ".repeat(indentLevel));
   }
 
   @Override
   public void visitModel(Model model) {
     for (Entity entity : model.getEntities()) {
-      // Réinitialise le buffer pour chaque nouvelle entité
+      // Reset le buffer pour chaque entité
       code.setLength(0);
+      currentClassName = entity.getName();
 
-      // Génère l'en-tête du fichier
-      code.append("package generated;\n\n");
+      // En-tête du fichier
+      code.append("package ").append(packageName).append(";\n\n");
       code.append("import java.util.*;\n\n");
 
       // Génère la classe
-      entity.accept(this);
+      visitEntity(entity);
 
       // Écrit le fichier
       writeToFile();
@@ -71,17 +59,18 @@ public class JavaGenerator extends Visitor {
 
   @Override
   public void visitEntity(Entity entity) {
-    currentClassName = entity.getName();
-    indent();
+    // Début de la classe
     code.append("public class ").append(entity.getName()).append(" {\n");
     indentLevel++;
 
-    // Attributs
+    // Génère les attributs
     for (Attribute attr : entity.getAttributes()) {
-      attr.accept(this);
+      indent();
+      code.append("private ").append(attr.getType().getName())
+        .append(" ").append(attr.getName()).append(";\n");
     }
 
-    // Constructeur
+    // Constructeur par défaut
     code.append("\n");
     indent();
     code.append("public ").append(entity.getName()).append("() {}\n");
@@ -91,16 +80,9 @@ public class JavaGenerator extends Visitor {
       generateAccessors(attr);
     }
 
+    // Fin de la classe
     indentLevel--;
-    indent();
     code.append("}\n");
-  }
-
-  @Override
-  public void visitAttribute(Attribute attr) {
-    indent();
-    code.append("private ").append(attr.getType().getName())
-      .append(" ").append(attr.getName()).append(";\n");
   }
 
   private void generateAccessors(Attribute attr) {

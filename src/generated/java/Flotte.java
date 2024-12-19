@@ -1,4 +1,4 @@
-package generated;
+package generated.java;
 
 import java.util.*;
 

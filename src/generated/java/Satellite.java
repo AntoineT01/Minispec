@@ -1,4 +1,4 @@
-package generated;
+package generated.java;
 
 import java.util.*;
 
@@ -33,6 +33,3 @@ public class Satellite {
         this.parent = parent;
     }
 }
-private String nom;
-private Integer id;
-private Flotte parent;
